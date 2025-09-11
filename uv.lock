@@ -1,0 +1,23 @@
+version = 1
+revision = 2
+requires-python = ">=3.13"
+
+[[package]]
+name = "sql-polyhedron"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "sqlglot" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "sqlglot", specifier = ">=27.13.2" }]
+
+[[package]]
+name = "sqlglot"
+version = "27.13.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/71/66/d323d56ffc98a50e17e172612f2f244e7a06b54d959c2d5acb14d83a8ab1/sqlglot-27.13.2.tar.gz", hash = "sha256:81a3b46be3a6700c23f72f74fc06059289d11468aed59242687ba1600ebcef52", size = 5457480, upload-time = "2025-09-08T23:21:00.335Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/03/e6/79ff6a637f30a96e2fb73955e74bee42402f7bf137556f32d6405c21820c/sqlglot-27.13.2-py3-none-any.whl", hash = "sha256:88bb687ed3233a2ada1cd49483ad93a80c44ddc7e0164c1709f2cf7e32465911", size = 512483, upload-time = "2025-09-08T23:20:57.794Z" },
+]
