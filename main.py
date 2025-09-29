@@ -1,32 +1,47 @@
 from models import schema
 from parsers import parser
 from printers.printer import Printer
-from printers.rumba import rumba_printer
+from printers.hdportal import hdportal_printer
 
 input: str = """
-create table if not exists apply_employee_ret
-(
-    tenant           varchar(16) not null comment 'uni 租户id',
-    bill_id          varchar(38) not null comment '申请单号',
-    id               varchar(38) not null comment '员工id',
-    code             varchar(38) not null comment '员工代码',
-    name             varchar(128) comment '员工名称',
-    org_id           varchar(38) not null comment '组织id',
-    org_code         varchar(38) not null comment '组织code',
-    org_type         varchar(38) not null comment '组织类型',
-    position_name    text comment '人事系统岗位',
-    current_position text comment '当前申请人岗位',
-    UNIQUE KEY uk_apply_employee_ret_1 (bill_id, id),
-    KEY idx_apply_employee_ret_id (bill_id)
-) engine = innodb
-  default COLLATE utf8_bin comment = '申请员工退';
+             create table if not exists hp_sync_privhp_request
+             (
+                 uuid            varchar(38) not null comment '主键',
+                 app_id          varchar(38) not null comment 'hdportal应用id',
+                 request_id      bigint      not null comment '服务端接收到请求时生成的雪花id',
+                 request_payload text        not null comment '请求报文',
+                 trace_id        varchar(50) not null comment 'trace_id',
+                 created         datetime comment '创建时间',
+                 creator_id      varchar(38) comment '创建人标识',
+                 creator_name    varchar(128) comment '创建人名称',
+                 primary key (uuid),
+                 unique key uk_hp_sync_privhp_request_1 (request_id)
+             ) engine = innodb
+               default COLLATE utf8_bin comment '待同步私有化hdportal请求表';
+
+             create table if not exists hp_tenant_sync_privhp_progress
+             (
+                 uuid               varchar(38) not null comment '主键',
+                 tenant             varchar(16) not null comment 'uni租户id',
+                 app_id             varchar(38) not null comment 'hdportal应用id',
+                 current_request_id bigint      not null comment '当前处理的请求id',
+                 sync_err_msg       varchar(255) comment '同步失败时的失败原因',
+                 trace_id           varchar(50) not null comment 'trace_id',
+                 created            datetime comment '创建时间',
+                 creator_id         varchar(38) comment '创建人标识',
+                 creator_name       varchar(128) comment '创建人名称',
+                 primary key (uuid),
+                 unique key uk_tenant_sync_privhp_progress_1 (tenant, app_id)
+             ) engine = innodb
+               default COLLATE utf8_bin comment '租户同步私有化hdportal进度';
              """
 
 
 class CompositePrinter(Printer):
     printers: list[Printer] = [
-        # rumba
-        rumba_printer.RumbaPGPrinter(),
+        hdportal_printer.HdportalPGPrinter(),
+        hdportal_printer.HdportalOraclePrinter(),
+        # hdportal_printer.HdportalJavaPrinter(),
     ]
 
     def __init__(self):

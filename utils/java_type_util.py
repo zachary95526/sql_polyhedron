@@ -17,7 +17,7 @@ def db_type_to_java_type(db_type):
     elif db_type == DataType.Type.BIGINT.name:
         return 'Long'
     elif db_type == DataType.Type.DATETIME.name:
-        return 'LocalDateTime'
+        return 'Date'
     elif db_type == DataType.Type.DECIMAL.name:
         return 'BigDecimal'
     else:

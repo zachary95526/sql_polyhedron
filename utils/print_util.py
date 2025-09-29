@@ -1,7 +1,8 @@
 class ColumnHolder:
-    rows: list[list[str]] = []
+    rows: list[list[str]]
 
     def __init__(self):
+        self.rows = []
         pass
 
     def add_row(self, parts: list[str]):
