@@ -236,13 +236,47 @@ class HdportalJavaPrinter(printer.Printer):
         for column in table.columns:
             print(f'  public static final String {column.name.upper()} = "{column.name}";')
         print('}')
+
         print()
+
+        has_version: bool = False
+        for column in table.columns:
+            if column.name == 'version':
+                has_version = True
+                break
+        print('@Getter')
+        print('@Setter')
+        if has_version:
+            print(f'public class {class_name}Bo implements HasVersion {{')
+        else:
+            print(f'public class {class_name}Bo {{')
         for column in table.columns:
             if len(column.comment) > 0:
                 print(f'  /** {column.comment} */')
             java_type = java_type_util.db_type_to_java_type(column.data_type)
             variable = string_util.to_program_variable(column.name)
             print(f'  private {java_type} {variable};')
+        print('}')
+
+        print()
+        print('@Repository')
+        print(f'public class {class_name}Dao extends NewJdbcBaseDao<{class_name}Bo> {{')
+        print(f'  private static final TEMapper<{class_name}Bo> MAPPER = TEMapperBuilder.of(')
+        print(f'      {class_name}Bo.class, {class_name}Schema.class).build();')
+        print('  private static final QueryProcessor QUERY_PROCESSOR = new QueryProcessorBuilder(')
+        print(f'      {class_name}Bo.class, {class_name}Schema.class).build();')
+        print()
+        print('  @Override')
+        print(f'  protected TEMapper<{class_name}Bo> getMapper() {{')
+        print('    return MAPPER;')
+        print('  }')
+        print()
+        print('  @Override')
+        print('  protected QueryProcessor getQueryProcessor() {')
+        print('    return QUERY_PROCESSOR;')
+        print('  }')
+        print()
+        print('}')
         print()
 
     pass
