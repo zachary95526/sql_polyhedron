@@ -76,6 +76,10 @@ class HdportalOraclePrinter(printer.Printer):
         return "hdportal-oracle实现"
 
     def print_create_table(self, table: schema.Table):
+        # 检查表名长度不能超过28，oracle会限制别名不能超过30，hdportal会加t_的前缀
+        if len(table.name) > 28:
+            raise ValueError(f'表{table.name}长度超过了28，请修改后再试')
+
         print(f"call rb_create_table('{table.name}', '")
 
         column_holder = print_util.ColumnHolder()
