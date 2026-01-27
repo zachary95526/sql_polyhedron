@@ -60,14 +60,33 @@ class Table:
         self.comment = comment
 
 
+class InsertValue:
+    column: str
+    value_type: sqlglot.expressions.DataType
+    value: object
+
+
+class InsertSql:
+    table: str
+    values: list[InsertValue]
+    ignore: bool
+
+    def __init__(self, table, values: list[InsertValue], ignore=False):
+        self.table = table
+        self.values = values
+        self.ignore = ignore
+
+
 class CommandType(Enum):
     # 建表
     TABLE_CREATE = auto()
+    # 插入语句
+    INSERT_SQL = auto()
     # 调用函数
     FUNCTION_CALL = auto()
 
 
 class Command:
-    def __init__(self, type: CommandType, value: Union[Table]):
+    def __init__(self, type: CommandType, value: Union[Table | InsertSql]):
         self.type = type
         self.value = value

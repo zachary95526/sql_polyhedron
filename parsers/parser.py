@@ -4,6 +4,8 @@ from typing import List
 from models import schema
 from sqlglot import parse, exp
 
+from models.schema import InsertValue
+
 
 class Parser(ABC):
 
@@ -60,7 +62,7 @@ class CreateTableExpressionHandler(ExpressionHandler):
     def support(self, expression):
         return expression.find(exp.Create)
 
-    def handle(self, expression):
+    def handle(self, expression) -> schema.Command:
         table = expression.find(exp.Table)
 
         table_name = table.name
@@ -111,7 +113,14 @@ class CreateTableExpressionHandler(ExpressionHandler):
 
 class FunctionCallExpressionHandler(ExpressionHandler):
     def support(self, expression):
-        return False
+        return expression.find(exp.Insert)
 
-    def handle(self, expression):
-        return None
+    def handle(self, expression) -> schema.Command:
+        table_name: str = ''
+        values: list[InsertValue] = []
+        ignore = False
+
+        # TODO 实现接口
+
+        insertSql = schema.InsertSql(table_name, values, ignore=ignore)
+        return schema.Command(schema.CommandType.INSERT_SQL, insertSql)

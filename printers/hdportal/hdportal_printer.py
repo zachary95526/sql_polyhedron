@@ -281,7 +281,22 @@ class HdportalJavaPrinter(printer.Printer):
         print('  }')
         print()
         print('}')
+
         print()
+
+        print('@Getter')
+        print('@Setter')
+        print(f'public class {class_name}Vo {{')
+        for column in table.columns:
+            if len(column.comment) > 0:
+                if column.notnull:
+                    print(f'@ApiModelProperty(value = "{column.comment}")')
+                else:
+                    print(f'@ApiModelProperty(value = "{column.comment}", required = true)')
+            java_type = java_type_util.db_type_to_java_type(column.data_type)
+            variable = string_util.to_program_variable(column.name)
+            print(f'  private {java_type} {variable};')
+        print('}')
 
     pass
 
