@@ -30,3 +30,12 @@ class Printer(ABC):
         :param command: 解析后的sql命令
         """
         pass
+
+    @abstractmethod
+    def print_insert_sql(self, command: schema.InsertSql):
+        """
+        调用函数/存储过程
+
+        :param command: 解析后的sql命令
+        """
+        pass

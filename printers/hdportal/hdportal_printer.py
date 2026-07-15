@@ -66,6 +66,60 @@ class HdportalPGPrinter(printer.Printer):
     def print_function_call(self, command: schema.Command):
         pass
 
+    def print_insert_sql(self, command: schema.InsertSql):
+        if command.table == 'hp_func':
+            id = next((str(x.value) for x in command.values if x.column == 'id'), '')
+            name = next((str(x.value) for x in command.values if x.column == 'name'), '')
+            url = next((str(x.value) for x in command.values if x.column == 'url'), '')
+            print(f'''INSERT INTO hp_func(app_id, id, simple_code, name, state, type, develop_technology, url, apply_to_os, version,
+                    created, creator_id, creator_name, last_modified, last_modifier_id, last_modifier_name)
+values ('zl-portal', '{id}', '{id}', '{name}', 'enabled', 'systemFunction', null,
+        '{url}', null, 0, NULL, 'system', 'system', NULL, 'system', 'system') ON CONFLICT DO NOTHING;''')
+            pass
+        elif command.table == 'hp_org_type_func':
+            org_type = next((str(x.value) for x in command.values if x.column == 'org_type'), '')
+            func_id = next((str(x.value) for x in command.values if x.column == 'func_id'), '')
+            print(f'''INSERT INTO hp_org_type_func(org_type, app_id, func_id)
+values ('{org_type}', 'zl-portal', '{func_id}') ON CONFLICT DO NOTHING;''')
+            pass
+        elif command.table == 'hp_func_permission':
+            func_id = next((str(x.value) for x in command.values if x.column == 'func_id'), '')
+            id = next((str(x.value) for x in command.values if x.column == 'id'), '')
+            name = next((str(x.value) for x in command.values if x.column == 'name'), '')
+            remark = next((str(x.value) for x in command.values if x.column == 'remark'), '')
+            print(f'''INSERT INTO hp_func_permission(app_id, func_id, id, name, type, remark, version, created, creator_id, creator_name,
+                               last_modified, last_modifier_id, last_modifier_name)
+values ('zl-portal', '{func_id}', '{id}', '{name}', 'func', '{remark}', 0, NULL, 'system', 'system', NULL, 'system',
+        'system') ON CONFLICT DO NOTHING;''')
+        elif command.table == 'hp_menu':
+            id = next((str(x.value) for x in command.values if x.column == 'id'), '')
+            name = next((str(x.value) for x in command.values if x.column == 'name'), '')
+            type = next((str(x.value) for x in command.values if x.column == 'type'), '')
+            parent_menu_id = next((str(x.value) for x in command.values if x.column == 'parent_menu_id'), '')
+            sort = next((str(x.value) for x in command.values if x.column == 'sort'), '')
+            print(f'''INSERT INTO hp_menu (tenant, id, name, type, parent_menu_id, sort, url, icon, open_style, version, created, creator_id,
+                     creator_name, last_modified, last_modifier_id, last_modifier_name)
+VALUES ('*', '{id}', '{name}', '{type}', '{parent_menu_id}', {sort}, NULL, NULL, NULL, 0, NULL,
+        'system', 'system', NULL, NULL, NULL) ON CONFLICT DO NOTHING;''')
+        elif command.table == 'hp_menu_func':
+            menu_id = next((str(x.value) for x in command.values if x.column == 'menu_id'), '')
+            func_id = next((str(x.value) for x in command.values if x.column == 'func_id'), '')
+            print(f'''INSERT INTO hp_menu_func (tenant, app_id, menu_id, func_id, created, creator_id, creator_name)
+VALUES ('*', 'zl-portal', '{menu_id}', '{func_id}', NULL, 'system', 'system') ON CONFLICT DO NOTHING;''')
+        elif command.table == 'hp_builtin_command':
+            id = next((str(x.value) for x in command.values if x.column == 'id'), '')
+            biz_type = next((str(x.value) for x in command.values if x.column == 'biz_type'), '')
+            args = next((str(x.value) for x in command.values if x.column == 'args'), '')
+            print(f'''INSERT INTO hp_builtin_command (id, biz_type, args, state, version, created, creator_id, creator_name)
+VALUES ('{id}', '{biz_type}', '{args}', 'ready', 0, null, 'upgrade', 'upgrade') ON CONFLICT DO NOTHING;''')
+        elif command.table == 'hp_resource_type':
+            type = next((str(x.value) for x in command.values if x.column == 'type'), '')
+            name = next((str(x.value) for x in command.values if x.column == 'name'), '')
+            data_structure = next((str(x.value) for x in command.values if x.column == 'data_structure'), '')
+            print(
+                f'''INSERT  INTO hp_resource_type(type, name, data_structure) VALUES('{type}', '{name}', '{data_structure}') ON CONFLICT DO NOTHING;''')
+        pass
+
 
 class HdportalOraclePrinter(printer.Printer):
 
@@ -77,7 +131,7 @@ class HdportalOraclePrinter(printer.Printer):
 
     def print_create_table(self, table: schema.Table):
         # 检查表名长度不能超过28，oracle会限制别名不能超过30，hdportal会加t_的前缀
-        if len(table.name) > 28:
+        if len(table.name) > 29:
             raise ValueError(f'表{table.name}长度超过了28，请修改后再试')
 
         print(f"call rb_create_table('{table.name}', '")
@@ -146,6 +200,58 @@ class HdportalOraclePrinter(printer.Printer):
     def print_function_call(self, command: schema.Command):
         pass
 
+    def print_insert_sql(self, command: schema.InsertSql):
+        if command.table == 'hp_func':
+            id = next((str(x.value) for x in command.values if x.column == 'id'), '')
+            name = next((str(x.value) for x in command.values if x.column == 'name'), '')
+            url = next((str(x.value) for x in command.values if x.column == 'url'), '')
+            print(f'''INSERT /*+ IGNORE_ROW_ON_DUPKEY_INDEX(hp_func(app_id,id))*/ INTO  hp_func(app_id, id, simple_code, name, state, type, develop_technology, url, apply_to_os, version, created,
+                                                                          creator_id, creator_name, last_modified, last_modifier_id, last_modifier_name)
+values ('zl-portal', '{id}', '{id}', '{name}', 'enabled', 'systemFunction', null, '{url}', null,
+        0, NULL, 'system', 'system', NULL, 'system', 'system');''')
+            pass
+        elif command.table == 'hp_org_type_func':
+            org_type = next((str(x.value) for x in command.values if x.column == 'org_type'), '')
+            func_id = next((str(x.value) for x in command.values if x.column == 'func_id'), '')
+            print(f'''INSERT /*+ IGNORE_ROW_ON_DUPKEY_INDEX(hp_org_type_func(org_type,app_id,func_id))*/ INTO  hp_org_type_func(org_type, app_id, func_id)
+values ('{org_type}', 'zl-portal', '{func_id}');''')
+            pass
+        elif command.table == 'hp_func_permission':
+            func_id = next((str(x.value) for x in command.values if x.column == 'func_id'), '')
+            id = next((str(x.value) for x in command.values if x.column == 'id'), '')
+            name = next((str(x.value) for x in command.values if x.column == 'name'), '')
+            remark = next((str(x.value) for x in command.values if x.column == 'remark'), '')
+            print(f'''INSERT /*+ IGNORE_ROW_ON_DUPKEY_INDEX(hp_func_permission(app_id,id))*/ INTO  hp_func_permission(app_id, func_id, id, name, type, remark, version, created, creator_id, creator_name,last_modified, last_modifier_id, last_modifier_name)
+values ('zl-portal', '{func_id}', '{id}', '{name}', 'func', '{remark}', 0, NULL, 'system', 'system', NULL, 'system','system');''')
+        elif command.table == 'hp_menu':
+            id = next((str(x.value) for x in command.values if x.column == 'id'), '')
+            name = next((str(x.value) for x in command.values if x.column == 'name'), '')
+            type = next((str(x.value) for x in command.values if x.column == 'type'), '')
+            parent_menu_id = next((str(x.value) for x in command.values if x.column == 'parent_menu_id'), '')
+            sort = next((str(x.value) for x in command.values if x.column == 'sort'), '')
+            print(f'''INSERT /*+ IGNORE_ROW_ON_DUPKEY_INDEX(hp_menu(tenant,id))*/ INTO  hp_menu(tenant, id, name, type, parent_menu_id, sort, url, icon, open_style, version, created, creator_id,
+                                                                          creator_name, last_modified, last_modifier_id, last_modifier_name)
+VALUES ('*', '{id}', '{name}', '{type}', '{parent_menu_id}', {sort}, NULL, NULL, NULL, 0, NULL,
+        'system', 'system', NULL, NULL, NULL);''')
+        elif command.table == 'hp_menu_func':
+            menu_id = next((str(x.value) for x in command.values if x.column == 'menu_id'), '')
+            func_id = next((str(x.value) for x in command.values if x.column == 'func_id'), '')
+            print(f'''INSERT /*+ IGNORE_ROW_ON_DUPKEY_INDEX(hp_menu_func(tenant, menu_id, app_id, func_id))*/ INTO  hp_menu_func(tenant, app_id, menu_id, func_id, created, creator_id, creator_name)
+VALUES ('*', 'zl-portal', '{menu_id}', '{func_id}', NULL, 'system', 'system');''')
+        elif command.table == 'hp_builtin_command':
+            id = next((str(x.value) for x in command.values if x.column == 'id'), '')
+            biz_type = next((str(x.value) for x in command.values if x.column == 'biz_type'), '')
+            args = next((str(x.value) for x in command.values if x.column == 'args'), '')
+            print(f'''INSERT /*+ IGNORE_ROW_ON_DUPKEY_INDEX(hp_builtin_command(id))*/ INTO hp_builtin_command (id, biz_type, args, state, version, created, creator_id, creator_name)
+VALUES ('{id}', '{biz_type}', '{args}', 'ready', 0, null, 'upgrade', 'upgrade');''')
+        elif command.table == 'hp_resource_type':
+            type = next((str(x.value) for x in command.values if x.column == 'type'), '')
+            name = next((str(x.value) for x in command.values if x.column == 'name'), '')
+            data_structure = next((str(x.value) for x in command.values if x.column == 'data_structure'), '')
+            print(
+                f'''INSERT /*+ IGNORE_ROW_ON_DUPKEY_INDEX(hp_resource_type(type))*/ INTO hp_resource_type(type, name, data_structure) VALUES('{type}', '{name}', '{data_structure}');''')
+        pass
+
 
 class HdportalPolarDbOPrinter(printer.Printer):
 
@@ -209,6 +315,60 @@ class HdportalPolarDbOPrinter(printer.Printer):
     def print_function_call(self, command: schema.Command):
         pass
 
+    def print_insert_sql(self, command: schema.InsertSql):
+        if command.table == 'hp_func':
+            id = next((str(x.value) for x in command.values if x.column == 'id'), '')
+            name = next((str(x.value) for x in command.values if x.column == 'name'), '')
+            url = next((str(x.value) for x in command.values if x.column == 'url'), '')
+            print(f'''INSERT INTO hp_func(app_id, id, simple_code, name, state, type, develop_technology, url, apply_to_os, version,
+                    created, creator_id, creator_name, last_modified, last_modifier_id, last_modifier_name)
+values ('zl-portal', '{id}', '{id}', '{name}', 'enabled', 'systemFunction', null,
+        '{url}', null, 0, NULL, 'system', 'system', NULL, 'system', 'system') ON CONFLICT DO NOTHING;''')
+            pass
+        elif command.table == 'hp_org_type_func':
+            org_type = next((str(x.value) for x in command.values if x.column == 'org_type'), '')
+            func_id = next((str(x.value) for x in command.values if x.column == 'func_id'), '')
+            print(f'''INSERT INTO hp_org_type_func(org_type, app_id, func_id)
+values ('{org_type}', 'zl-portal', '{func_id}') ON CONFLICT DO NOTHING;''')
+            pass
+        elif command.table == 'hp_func_permission':
+            func_id = next((str(x.value) for x in command.values if x.column == 'func_id'), '')
+            id = next((str(x.value) for x in command.values if x.column == 'id'), '')
+            name = next((str(x.value) for x in command.values if x.column == 'name'), '')
+            remark = next((str(x.value) for x in command.values if x.column == 'remark'), '')
+            print(f'''INSERT INTO hp_func_permission(app_id, func_id, id, name, type, remark, version, created, creator_id, creator_name,
+                               last_modified, last_modifier_id, last_modifier_name)
+values ('zl-portal', '{func_id}', '{id}', '{name}', 'func', '{remark}', 0, NULL, 'system', 'system', NULL, 'system',
+        'system') ON CONFLICT DO NOTHING;''')
+        elif command.table == 'hp_menu':
+            id = next((str(x.value) for x in command.values if x.column == 'id'), '')
+            name = next((str(x.value) for x in command.values if x.column == 'name'), '')
+            type = next((str(x.value) for x in command.values if x.column == 'type'), '')
+            parent_menu_id = next((str(x.value) for x in command.values if x.column == 'parent_menu_id'), '')
+            sort = next((str(x.value) for x in command.values if x.column == 'sort'), '')
+            print(f'''INSERT INTO hp_menu (tenant, id, name, type, parent_menu_id, sort, url, icon, open_style, version, created, creator_id,
+                     creator_name, last_modified, last_modifier_id, last_modifier_name)
+VALUES ('*', '{id}', '{name}', '{type}', '{parent_menu_id}', {sort}, NULL, NULL, NULL, 0, NULL,
+        'system', 'system', NULL, NULL, NULL) ON CONFLICT DO NOTHING;''')
+        elif command.table == 'hp_menu_func':
+            menu_id = next((str(x.value) for x in command.values if x.column == 'menu_id'), '')
+            func_id = next((str(x.value) for x in command.values if x.column == 'func_id'), '')
+            print(f'''INSERT INTO hp_menu_func (tenant, app_id, menu_id, func_id, created, creator_id, creator_name)
+VALUES ('*', 'zl-portal', '{menu_id}', '{func_id}', NULL, 'system', 'system') ON CONFLICT DO NOTHING;''')
+        elif command.table == 'hp_builtin_command':
+            id = next((str(x.value) for x in command.values if x.column == 'id'), '')
+            biz_type = next((str(x.value) for x in command.values if x.column == 'biz_type'), '')
+            args = next((str(x.value) for x in command.values if x.column == 'args'), '')
+            print(f'''INSERT INTO hp_builtin_command (id, biz_type, args, state, version, created, creator_id, creator_name)
+VALUES ('{id}', '{biz_type}', '{args}', 'ready', 0, null, 'upgrade', 'upgrade') ON CONFLICT DO NOTHING;''')
+        elif command.table == 'hp_resource_type':
+            type = next((str(x.value) for x in command.values if x.column == 'type'), '')
+            name = next((str(x.value) for x in command.values if x.column == 'name'), '')
+            data_structure = next((str(x.value) for x in command.values if x.column == 'data_structure'), '')
+            print(
+                f'''INSERT  INTO hp_resource_type(type, name, data_structure) VALUES('{type}', '{name}', '{data_structure}') ON CONFLICT DO NOTHING;''')
+        pass
+
 
 class HdportalJavaPrinter(printer.Printer):
 
@@ -238,7 +398,20 @@ class HdportalJavaPrinter(printer.Printer):
         print('  public static final String TABLE_ALIAS = Consts.UNDERLINE + TABLE_NAME;')
         print()
         for column in table.columns:
-            print(f'  public static final String {column.name.upper()} = "{column.name}";')
+            field = column.name.upper()
+            if column.name == 'created':
+                field = 'CREATE_INFO_TIME'
+            elif column.name == 'creator_id':
+                field = 'CREATE_INFO_ID'
+            elif column.name == 'creator_name':
+                field = 'CREATE_INFO_NAME'
+            elif column.name == 'last_modified':
+                field = 'LAST_MODIFY_INFO_TIME'
+            elif column.name == 'last_modifier_id':
+                field = 'LAST_MODIFY_INFO_ID'
+            elif column.name == 'last_modifier_name':
+                field = 'LAST_MODIFY_INFO_NAME'
+            print(f'  public static final String {field} = "{column.name}";')
         print('}')
 
         print()
@@ -255,6 +428,27 @@ class HdportalJavaPrinter(printer.Printer):
         else:
             print(f'public class {class_name}Bo {{')
         for column in table.columns:
+            if column.name == 'created':
+                print(f'  /** 创建人信息 */')
+                print(f'  private OperatorInfo createInfo;')
+                continue
+            elif column.name == 'creator_id':
+                continue
+            elif column.name == 'creator_name':
+                continue
+            elif column.name == 'last_modified':
+                print(f'  /** 最后修改信息 */')
+                print(f'  private OperatorInfo lastModifyInfo;')
+                continue
+            elif column.name == 'last_modifier_id':
+                continue
+            elif column.name == 'last_modifier_name':
+                continue
+            elif column.name == 'version':
+                print(f'  /** 版本号 */')
+                print(f'  private long version;')
+                continue
+
             if len(column.comment) > 0:
                 print(f'  /** {column.comment} */')
             java_type = java_type_util.db_type_to_java_type(column.data_type)
@@ -288,17 +482,38 @@ class HdportalJavaPrinter(printer.Printer):
         print('@Setter')
         print(f'public class {class_name}Vo {{')
         for column in table.columns:
-            if len(column.comment) > 0:
-                if column.notnull:
-                    print(f'@ApiModelProperty(value = "{column.comment}")')
-                else:
-                    print(f'@ApiModelProperty(value = "{column.comment}", required = true)')
+            if column.name == 'created':
+                print(f'  @ApiModelProperty("创建人信息")')
+                print(f'  private OperatorInfo createInfo;')
+                continue
+            elif column.name == 'creator_id':
+                continue
+            elif column.name == 'creator_name':
+                continue
+            elif column.name == 'last_modified':
+                print(f'  @ApiModelProperty("最后更新人信息")')
+                print(f'  private OperatorInfo lastModifyInfo;')
+                continue
+            elif column.name == 'last_modifier_id':
+                continue
+            elif column.name == 'last_modifier_name':
+                continue
+            elif column.name == 'version':
+                print(f'  @ApiModelProperty(value = "版本号。只读")')
+                print(f'  private long version;')
+                continue
+
+            if column.notnull:
+                print(f'  @ApiModelProperty(value = "{column.comment}", required = true)')
+            else:
+                print(f'  @ApiModelProperty(value = "{column.comment}")')
             java_type = java_type_util.db_type_to_java_type(column.data_type)
             variable = string_util.to_program_variable(column.name)
             print(f'  private {java_type} {variable};')
         print('}')
 
-    pass
-
     def print_function_call(self, command: schema.Command):
+        pass
+
+    def print_insert_sql(self, command: schema.InsertSql):
         pass

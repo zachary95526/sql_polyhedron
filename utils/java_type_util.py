@@ -8,7 +8,7 @@ def db_type_to_java_type(db_type):
     :param db_type: 数据库类型
     :return: java类型
     """
-    if db_type == DataType.Type.VARCHAR.name or db_type == DataType.Type.TEXT.name:
+    if db_type == DataType.Type.VARCHAR.name or db_type == DataType.Type.TEXT.name or db_type == DataType.Type.MEDIUMTEXT.name:
         return 'String'
     elif db_type == DataType.Type.BIT.name or db_type == DataType.Type.BOOLEAN.name:
         return 'Boolean'

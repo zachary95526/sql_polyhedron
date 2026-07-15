@@ -62,7 +62,7 @@ class Table:
 
 class InsertValue:
     column: str
-    value_type: sqlglot.expressions.DataType
+    value_type: sqlglot.expressions.DataType.Type
     value: object
 
 

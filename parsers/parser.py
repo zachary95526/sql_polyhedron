@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
+from sqlglot.expressions import DataType
 
 from models import schema
 from sqlglot import parse, exp
@@ -120,7 +121,50 @@ class FunctionCallExpressionHandler(ExpressionHandler):
         values: list[InsertValue] = []
         ignore = False
 
-        # TODO 实现接口
+        insert_expr = expression.find(exp.Insert)
+        if insert_expr.args.get('ignore'):
+            ignore = True
+
+        columns = []
+        if isinstance(insert_expr.this, exp.Schema):
+            table_name = insert_expr.this.this.name
+            columns = [c.name for c in insert_expr.this.expressions]
+        elif isinstance(insert_expr.this, exp.Table):
+            table_name = insert_expr.this.name
+
+        values_expr = insert_expr.expression
+        if isinstance(values_expr, exp.Values) and values_expr.expressions:
+            first_row = values_expr.expressions[0].expressions
+
+            if columns and len(columns) == len(first_row):
+                for col_name, val_expr in zip(columns, first_row):
+                    iv = InsertValue()
+                    iv.column = col_name
+
+                    if isinstance(val_expr, exp.Null):
+                        iv.value_type = DataType.Type.NULL
+                        iv.value = None
+                    elif isinstance(val_expr, exp.Literal):
+                        if val_expr.is_string:
+                            iv.value_type = DataType.Type.VARCHAR
+                            iv.value = val_expr.this
+                        elif val_expr.is_int:
+                            iv.value_type = DataType.Type.INT
+                            iv.value = int(val_expr.this)
+                        elif val_expr.is_number:
+                            iv.value_type = DataType.Type.DOUBLE
+                            iv.value = float(val_expr.this)
+                        else:
+                            iv.value_type = DataType.Type.VARCHAR
+                            iv.value = val_expr.this
+                    elif isinstance(val_expr, exp.Boolean):
+                        iv.value_type = DataType.Type.BOOLEAN
+                        iv.value = val_expr.this
+                    else:
+                        iv.value_type = DataType.Type.VARCHAR
+                        iv.value = val_expr.sql()
+
+                    values.append(iv)
 
         insertSql = schema.InsertSql(table_name, values, ignore=ignore)
         return schema.Command(schema.CommandType.INSERT_SQL, insertSql)
